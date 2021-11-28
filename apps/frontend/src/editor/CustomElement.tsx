@@ -13,7 +13,7 @@ export enum CustomElementType {
 }
 
 export interface CustomElement extends BaseElement {
-  type: CustomElementType
+  type?: CustomElementType
 }
 
 export const CustomElement: React.FC<RenderElementProps> = ({ attributes, children, element }) => {

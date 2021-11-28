@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Editor } from '../editor'
 import { useNote } from './hooks'
 import { ReadyState } from 'react-use-websocket'
@@ -9,22 +9,17 @@ interface SingleNoteProps {
   id: string
 }
 
-const Home: React.FC<SingleNoteProps> = ({ id }) => {
-  const { note, readyState } = useNote(id)
+const SingleNote: React.FC<SingleNoteProps> = ({ id }) => {
+  const [onlineStatus, setOnlineStatus] = useState<Boolean>(false)
 
-  const connectionStatusColor = {
-    [ReadyState.CONNECTING]: 'info',
-    [ReadyState.OPEN]: 'success',
-    [ReadyState.CLOSING]: 'warning',
-    [ReadyState.CLOSED]: 'error',
-    [ReadyState.UNINSTANTIATED]: 'error',
-  }[readyState] as BadgeTypeMap['props']['color']
+  // TODO: Load note title
+  const [noteTitle, setNoteTitle] = useState<string>('title to be loaded')
 
-  return note ? (
-    <>
-      <Badge color={connectionStatusColor} variant="dot" sx={{ width: '100%' }}>
+  return <>
+      <Badge color={onlineStatus ? 'success' : 'error'} variant="dot" sx={{ width: '100%' }}>
+        { /* TODO: Allow editing the title */ }
         <TextField
-          value={note.title}
+          value={noteTitle}
           variant="standard"
           fullWidth={true}
           inputProps={{ style: { fontSize: 32, color: '#666' } }}
@@ -38,10 +33,9 @@ const Home: React.FC<SingleNoteProps> = ({ id }) => {
           flexDirection: 'column',
         }}
       >
-        <Editor initialValue={note.content} />
+        <Editor id={id} onEditorConnected={() => setOnlineStatus(true)} onEditorDisconnected={() => setOnlineStatus(false)} />
       </Paper>
     </>
-  ) : null
 }
 
-export default Home
+export default SingleNote
