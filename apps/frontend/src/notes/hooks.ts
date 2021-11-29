@@ -1,31 +1,12 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-import { useEffect } from 'react'
-import useSWR from 'swr'
-import { NotesResponse, NoteResponse } from '../../../backend/routes/notes'
+import { useEffect, useState } from 'react'
 import useWebSocket, { ReadyState } from 'react-use-websocket'
 
-// If you want to use GraphQL API or libs like Axios, you can create your own fetcher function. 
-// Check here for more examples: https://swr.vercel.app/docs/data-fetching
-const fetcher = async (
-  input: RequestInfo,
-  init: RequestInit
-) => {
-  const res = await fetch(input, init);
-  return res.json();
-}
+import { NoteListWsServerEvent, NoteListWsClientCommand, NoteMetadata } from '../../../backend/shared/models'
 
 export const useNotesList = () => {
-  const { data, error } = useSWR<NotesResponse>('http://localhost:3001/api/notes', fetcher)
-
-  return {
-    notesList: data?.notes,
-    isLoading: !error && !data,
-    isError: error,
-  }
-}
-
-export const useNote = (id: string) => {
-  const { readyState, lastMessage, sendMessage } = useWebSocket(`ws://localhost:3001/api/notes/${id}`)
+  const { readyState, lastMessage, sendMessage } = useWebSocket(`ws://localhost:3001/api/notes/ws`)
+  const [notes, setNotes] = useState<NoteMetadata[]>([])
 
   // Send a message when ready on first load
   useEffect(() => {
@@ -34,9 +15,37 @@ export const useNote = (id: string) => {
     }
   }, [readyState, lastMessage])
   
+  const wsEvent = JSON.parse((lastMessage || { data: '{}' }).data) as NoteListWsServerEvent
+  useEffect(() => {
+    if (wsEvent?.gotNotes) {
+      console.log('got notes', wsEvent.gotNotes)
+      setNotes(wsEvent.gotNotes)
+    } else if (wsEvent?.noteCreated) {
+      console.log('note created', wsEvent.noteCreated)
+      const note = wsEvent.noteCreated as NoteMetadata
+      
+      setNotes(n => {
+        if (n.map(x => x.id).indexOf(note.id) >= 0) return n
+        else return [...n, note]
+      })
+    } else if (wsEvent?.noteUpdated) {
+      console.log('got updated', wsEvent.noteUpdated)
+      setNotes(n => {
+        return n.map(current => current.id === wsEvent.noteUpdated?.id ? wsEvent.noteUpdated : current)
+      })
+    } else {
+      console.log('got weird event', wsEvent)
+    }
+    // TODO: The event needs a way to compare its content without encoding it as string
+    // Without this, the effect is run after every update because the wsEvent apparently changed
+    // just because it is another instance but the content is the same
+    //
+    // which should allow using wsEvent as a dependency
+  }, [lastMessage])
 
   return {
-    note: lastMessage && JSON.parse(lastMessage.data) as NoteResponse,
-    readyState,
+    notes,
+    create: (name: string) => sendMessage(JSON.stringify({ createNote: name } as NoteListWsClientCommand)),
+    update: (data: NoteMetadata) => sendMessage(JSON.stringify({ updateNote: data } as NoteListWsClientCommand))
   }
 }

@@ -1,9 +1,7 @@
 import React, { useState } from 'react'
 import { Editor } from '../editor'
-import { useNote } from './hooks'
-import { ReadyState } from 'react-use-websocket'
 
-import { Paper, TextField, Badge, BadgeTypeMap } from '@mui/material'
+import { Paper, TextField, Badge } from '@mui/material'
 
 interface SingleNoteProps {
   id: string
