@@ -1,6 +1,6 @@
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from 'uuid'
 
-import { NoteMetadata } from '../models';
+import { NoteMetadata } from '../shared/models'
 
 /**
  * This is responsibly to just store the available note definitions, which is like the
@@ -50,7 +50,10 @@ class NoteMetadataRepository {
     }
 
     private toNoteMetadata(doc: FirebaseFirestore.DocumentSnapshot<FirebaseFirestore.DocumentData>) {
-        return new NoteMetadata(doc.id, doc.get('name'))
+        return {
+            id: doc.id,
+            name: doc.get('name')
+        } as NoteMetadata
     }
 }
 

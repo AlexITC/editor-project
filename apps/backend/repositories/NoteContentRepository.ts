@@ -1,4 +1,4 @@
-import { NoteContent } from '../models';
+import { NoteContent } from '../shared/models'
 
 /**
  * This is responsibly to just store the content for the notes, which assumes that the necessary
@@ -33,7 +33,9 @@ class NoteContentRepository {
     }
 
     private toNoteContent(doc: FirebaseFirestore.DocumentSnapshot<FirebaseFirestore.DocumentData>) {
-        return new NoteContent(doc.id, doc.get('content'))
+        return {
+            id: doc.id, content: doc.get('content')
+        } as NoteContent
     }
 }
 
