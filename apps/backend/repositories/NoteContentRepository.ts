@@ -16,18 +16,19 @@ class NoteContentRepository {
     }
 
     async save(data: NoteContent): Promise<void> {
+        console.log('save content', data.id)
         await this.collection.doc(data.id).set({
             content: data.content
         })
     }
 
-    async find(id: string): Promise<NoteContent> {
+    async find(id: string): Promise<NoteContent | null> {
+        console.log('find content', id)
         const doc = await this.collection.doc(id).get()
         if (doc.exists) {
             return this.toNoteContent(doc)
         } else {
-            // If we are searching for this is because the note should already exist
-            return new NoteContent(id, '')
+            return null
         }
     }
 
